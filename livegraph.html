@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Crypto Clay</title>
+</head>
+
+<body>
+    <div id="graph" style="width:100vw;height:100vh;"></div>
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        let graph = document.getElementById('graph');
+        var data = [];
+        Plotly.newPlot('graph', data);
+
+        var socket = new WebSocket('ws://localhost:3001');
+        socket.onopen = () => {
+            socket.send(JSON.stringify({
+                type: 'open'
+            }));
+        }
+        socket.onmessage = event => {
+            Promise.resolve(JSON.parse(event.data)).then(jsonMessage => {
+                switch (jsonMessage.type) {
+                    case 'init':
+                        {
+                            console.log(jsonMessage.initMarkets);
+                            Plotly.addTraces(graph, jsonMessage.initMarkets);
+                            break;
+                        }
+                    case 'update':
+                        {
+                            console.log(jsonMessage.updatedMarkets);
+                            console.log(jsonMessage.indexes);
+                            Plotly.extendTraces(graph, jsonMessage.updatedMarkets, jsonMessage.indexes)
+                            break;
+                        }
+                    default:
+                        {}
+                }
+            }).catch(err => {
+
+            });
+        };
+    });
+    </script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</body>
+
+</html>
